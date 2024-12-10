@@ -1,22 +1,26 @@
 import React, { useState } from "react";
-import ApiService from "./ApiService"
+import ApiService from "../ApiService"
 import Cookies from "js-cookie";
-import {Navigate} from 'react-router-dom'
+import {Navigate, useNavigate} from 'react-router-dom'
+import {Button} from 'antd'
 
 const Login  = () => {
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-
+    
+    const navigate = useNavigate();
 
 const handleLogin = async (e) =>
     {
         e.preventDefault();
-        try{
+        try
+        {
             const token = await ApiService.Auth(login, password);
             Cookies.set('authToken', token, {expires: 1})
             console.log(token);
-            return <Navigate to="/Menu" replace={true}/>;
+            setError('Данные верны');
+            navigate("/Menu");
         }
         catch (err)
         {

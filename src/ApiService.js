@@ -8,9 +8,19 @@ const ApiService = {
         try {
             const response = await axios.post(`${API_BASE_URL}/Account/Login?login=${login}&password=${password}`);
             return response.data;
-        } 
+        }
         catch (error){
-            throw error;
+            console.log(error);
+        }
+    },
+    GetTasks: async() => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/Task/all`);
+            // console.log(`ApiService/GetTasks` );
+            // console.log(response);
+            return response.data;
+        } catch (error){
+            console.log(error);
         }
     },
 }
