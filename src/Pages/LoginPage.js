@@ -17,10 +17,13 @@ const handleLogin = async (e) =>
         try
         {
             const token = await ApiService.Auth(login, password);
+            console.log('Токен авторизации:', token);
+            if (!token)
+                return;
             Cookies.set('authToken', token, {expires: 1})
             console.log(token);
             setError('Данные верны');
-            navigate("/Menu");
+            navigate("/Tasks");
         }
         catch (err)
         {

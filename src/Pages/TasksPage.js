@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, createElement } from "react";
 import ApiService from "../ApiService";
-import { Button, Flex, Grid, Row, Space, Table, Tag, Col } from 'antd';
+import { Button, Flex, Grid, Row, Space, Table, Tag, Col, Select, Switch, Radio } from 'antd';
 import { render } from "@testing-library/react";
 import { formatDate } from "date-fns"
 import { differenceInDays } from "date-fns";
 import { Typography } from "antd";
+import CreateModal from "../Modals/TasksEditModal"
+import {Navigate, useNavigate} from 'react-router-dom'
+
 const Tasks = () => {    
     const today = new Date();
     const [data, setData] = useState([]);
@@ -25,7 +28,6 @@ const Tasks = () => {
             dataIndex: 'deadLine',
             key: 'DeadLine',
             render: (date) => formatDate(new Date(date), 'dd.MM.yyyy HH:mm'),
-        
         },
         {
             title: 'Статус',
@@ -39,48 +41,112 @@ const Tasks = () => {
             render: (_, record) =>{
                return <Flex vertical gap={5}>
                <Button type="primary" danger>Удалить</Button>
-               <Button type="primary">Редактировать</Button>
+               <Button type="primary" onClick={() => editTask(record)}>Редактировать</Button>
                </Flex> 
             }
         }
     ];
+    
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isCreate, setIsCreate] = useState(true);
+    const [selectedRowData, setSelectedRowData] = useState(null);
+    const [selectStatusTask, setSelectStatusTask ] = useState(null);
+
+    const showModal = () => setIsModalVisible(true);
+
+    const handleCancel = () => setIsModalVisible(false);
+    const handleOk = () => setIsModalVisible(false);
+    const editTask = (record) => {
+        setIsCreate(false);
+        setSelectedRowData(record);
+        showModal();
+    }
+    const createTask = () => {
+        setIsCreate(true);
+        setSelectedRowData(false);
+        showModal();
+    }
+
+    const handleChangeStatus = (e) => {
+        console.log('handleChangeStatus')
+        setSelectStatusTask(e.target.value);
+        console.log(e.target.value);
+    }
+    const navigate = useNavigate();
 
     useEffect(() => {
+        console.log('вызов useEffect');
+        console.log(selectStatusTask);
         const fetchData = async () => {
             try {
-                const tasks = await ApiService.GetTasks();
-                console.log(tasks);
-                // var transformTasks = transformData(tasks);
-                setData(tasks);
-                console.log(tasks);
+                const response = await ApiService.GetTasks(selectStatusTask);
+                console.log('GetTasks response: ', response);
+                if (response.code == 200)
+                    setData(response.data);
+                if (response.code == 401)
+                    navigate("/Login");
             } catch (error) {
                 console.log(error);
             }
         }
 
-        // const transformData = (data) => {
-        //     if (!data || !Array.isArray(data)) return [];
-        //     return data.map(item => ({
-        //         ...item, 
-        //         IsCompleted: 
-        //     }));
-        // }
-
         fetchData();
-    }, []);
+
+        const intervalId = setInterval(async () => {
+            console.log(`status: ` + selectStatusTask);
+            const response = await ApiService.GetTasks(selectStatusTask);
+            console.log(response);
+            if (response.status == 200)
+                {
+                    setData(response.data);
+                    console.log(`Данные получены`);
+                }
+                if (response.status == 401)
+                    navigate("/Login");
+        }, 5000);
+
+        return () => clearInterval(intervalId);
+    }, [selectStatusTask]);
+
+
     return (
         <>
+        <CreateModal
+        isCreate={isCreate}
+        open={isModalVisible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        task = {selectedRowData}
+        />
             <Row>
                 <Col span={12}>
                 <Typography.Title>Задачи</Typography.Title>
                 </Col>
             </Row>
-            <Row style={{height: '100px'}}>
+            <Row>
+                <Col span={12}>
+                <Typography.Title level={3}>Фильтры</Typography.Title>
+                <Space>
+                    <Typography.Text gap={15} level={5}>Статус задачи</Typography.Text>
+                    <Radio.Group gap={15} onChange={handleChangeStatus}>
+                        <Radio value={null}>Не выбрано</Radio>
+                        <Radio value={true}>Выполнено</Radio>
+                        <Radio value={false}>Не выполнено</Radio>
+                    </Radio.Group>
+                </Space>
+                </Col>
+            </Row>
+            <Row >
                 <Col span={2}></Col>
-                <Col  span={20}>
-                <Table dataSource={data} columns={columns} />
+                <Col span={20}>
+                <Table dataSource={data} columns={columns} rowKey='id'/>
                 </Col>
                 <Col span={2}></Col>
+            </Row>
+            <Row>
+                <Space align="center"  style={{justifyContent:'center', width: "100%", margin: '10px'}}>
+                  <Button type="primary" style={{padding: '20px'}} onClick={createTask}>Создать задачу</Button>
+                </Space>
             </Row>
         </>
     );
