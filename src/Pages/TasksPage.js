@@ -1,6 +1,6 @@
 import React, { useState, useEffect, createElement } from "react";
 import ApiService from "../ApiService";
-import { Button, Flex, Grid, Row, Space, Table, Tag, Col, Select, Switch, Radio } from 'antd';
+import { Button, Flex, Grid, Row, Space, Table, Tag, message, Col, Select, Switch, Radio } from 'antd';
 import { render } from "@testing-library/react";
 import { formatDate } from "date-fns"
 import { differenceInDays } from "date-fns";
@@ -40,8 +40,8 @@ const Tasks = () => {
             key: 'action',
             render: (_, record) =>{
                return <Flex vertical gap={5}>
-               <Button type="primary" danger>Удалить</Button>
                <Button type="primary" onClick={() => editTask(record)}>Редактировать</Button>
+               <Button type="primary" onClick={() => completeTask(record)} disabled={record.isCompleted == true}>Завершить задачу</Button>
                </Flex> 
             }
         }
@@ -68,19 +68,14 @@ const Tasks = () => {
     }
 
     const handleChangeStatus = (e) => {
-        console.log('handleChangeStatus')
         setSelectStatusTask(e.target.value);
-        console.log(e.target.value);
     }
     const navigate = useNavigate();
 
     useEffect(() => {
-        console.log('вызов useEffect');
-        console.log(selectStatusTask);
         const fetchData = async () => {
             try {
                 const response = await ApiService.GetTasks(selectStatusTask);
-                console.log('GetTasks response: ', response);
                 if (response.code == 200)
                     setData(response.data);
                 if (response.code == 401)
@@ -93,20 +88,28 @@ const Tasks = () => {
         fetchData();
 
         const intervalId = setInterval(async () => {
-            console.log(`status: ` + selectStatusTask);
             const response = await ApiService.GetTasks(selectStatusTask);
-            console.log(response);
             if (response.status == 200)
                 {
                     setData(response.data);
-                    console.log(`Данные получены`);
                 }
                 if (response.status == 401)
                     navigate("/Login");
-        }, 5000);
+        }, 3000);
 
         return () => clearInterval(intervalId);
     }, [selectStatusTask]);
+
+    const completeTask = async (record) => {
+        var response = await ApiService.PutTaskIsComplete(record.id, true);
+        console.log(response);
+        if (response.status == 200)
+        {
+            message.success('Задача помечена как "Выполнено"');
+        } else{
+            message.error('Статус задачи не был сохранен');
+        }
+    }
 
 
     return (

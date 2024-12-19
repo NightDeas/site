@@ -6,27 +6,30 @@ const API_BASE_URL = "https://localhost:7089/api";
 const ApiService = {
     Auth: async(login, password) => {
         try {
-            const response = await axios.post(`${API_BASE_URL}/Account/Login?login=${login}&password=${password}`);
-            return response.data;
+            const loginRequest = {
+                Login: login,
+                Password: password
+            };
+            const response = await axios.post(`${API_BASE_URL}/Account/Login`, loginRequest,
+             {
+                headers:{
+                   'Content-Type' : 'application/json'
+                }
+            });
+            return response;
         }
         catch (error){
             console.log(error);
         }
     },
     GetTasks: async(isCompleted) => {
-        console.log('GetTasks > isCompleted: ' + isCompleted);
         const token = Cookies.get('authToken');
-        console.log('token: ' + token);
         if (!token)
         {
-            console.log('GetTasks > НЕ пройдена авторизация');
             return new AxiosError('Not Auth', 401);
         }
-        console.log('GetTasks > пройдена авторизация');
         try {
             var link = `${API_BASE_URL}/Task/currentEmployee?IsCompleted=${isCompleted === null ? "" : isCompleted}`;
-            console.log(link);
-            console.log('выполняет запрос');
             const response = await axios.get(link, {
                 headers:
                     { 'Authorization': `Bearer ${token}` }
@@ -34,20 +37,65 @@ const ApiService = {
             return response;
 
         } catch (error){
-            console.log('попал в catch');
             console.log(error);
             return error;
         }
     },
-    PutTask: async(taskId, updateTask) => {
-        try{
-            console.log('вход в PutTask');
-            var link = `${API_BASE_URL}/Task`;
-            console.log(link);
-            console.log(updateTask);
-            const response = await axios.put(link, updateTask, {params: {taskId: taskId}});
-        } catch (error){
-            console.log(error);
+        PutTask: async (taskId, updateTask) => {
+        try {
+            console.log('Вход в PutTask');
+            const link = `${API_BASE_URL}/Task`;
+            const token = Cookies.get('authToken');
+    
+            if (!token) {
+                console.error('Токен авторизации отсутствует');
+                throw new Error('Not Auth', 401);
+            }
+    
+            var response = await axios.put(link, updateTask, {
+                params: { taskId: taskId },
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+    
+            console.log('PutTask response:', response);
+            return response;
+        } catch (error) {
+            console.error('PutTask error:', error);
+            return error;
+        }
+    },
+     PutTaskIsComplete: async (taskId, isCompleted) => {
+        try {
+            const link = `${API_BASE_URL}/Task/taskCompleted`;
+            const token = Cookies.get('authToken');
+            
+            if (!token) {
+                console.error('PutTaskIsComplete Токен авторизации отсутствует');
+                throw new Error('Not Auth', 401);
+            }
+            var request = {
+                taskId: taskId,
+                isCompleted: isCompleted
+            };
+            
+            const response = await axios.put(link, request, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+    
+            console.log('PutTaskIsComplete response:', response);
+            return response;
+        } catch (error) {
+            console.error('PutTaskIsComplete error:', error);
+            return {
+                success: false,
+                error: error.response?.data || error.message || 'Произошла ошибка при выполнении запроса'
+            };
         }
     },
     GetEmployees: async() => {
@@ -60,12 +108,24 @@ const ApiService = {
     },
     PostTask: async(createTaskRequest) => {
         try {
-            const response = await axios.post(`${API_BASE_URL}/Task`, createTaskRequest);
-            return response.data;
+            const token = Cookies.get('authToken');
+            
+            if (!token) {
+                console.error('PutTaskIsComplete Токен авторизации отсутствует');
+                throw new Error('Not Auth', 401);
+            }
+                const response = await axios.post(`${API_BASE_URL}/Task`, createTaskRequest, {
+                headers:{
+                    'Authorization' : `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            return response;
         } 
         catch(error)
         {
             console.log(`PostTask error: ${error}`);
+            return error;
         }
     },
 }

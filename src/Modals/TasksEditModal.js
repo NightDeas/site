@@ -40,9 +40,7 @@ const CreateModal = ({ isCreate, open, onCancel, onOk, task }) =>{
 
     const handleOk = async () => {
         try{
-            console.log('Валидация формы');
             await form.validateFields();
-            console.log('Получение значений');
             const values = form.getFieldsValue();
             console.log(values);
             const taskRequest = {
@@ -54,15 +52,34 @@ const CreateModal = ({ isCreate, open, onCancel, onOk, task }) =>{
             console.log(task.id);
             if (task.id != null)
             {
-                await ApiService.PutTask(task.id, taskRequest);
-                console.log('Сущность обновлена');
-                message.info(`Задача обновлена`);
+                var result = await ApiService.PutTask(task.id, taskRequest);
+                console.log(result);
+                if (result.status == 200)
+                {
+
+                    console.log('Сущность обновлена');
+                    message.success(`Задача обновлена`);
+                } else if (result.status == 403)
+                {
+                    console.log('Недостаточно прав доступа');
+                    message.error(`Недостаточно прав доступа`);
+                } else {
+                    console.log('Сущность не обновлена');
+                    message.error(`Задача не обновлена`);
+                }
             }
             else
             {
-                var result = await ApiService.PostTask(taskRequest);
-                console.log(`Сущность добавлена: ${result}`);
-                message.info(`Задача добавлена`);
+                var response = await ApiService.PostTask(taskRequest);
+                console.log('TaskPost response', response);
+                if (response.status == 200)
+                {
+                    console.log(`Сущность добавлена: ${response.data}`);
+                    message.success(`Задача добавлена`);
+                }else
+                {
+                    message.error(`Ошибка при добавлении задачи`);
+                }
             }
             onOk();
         }

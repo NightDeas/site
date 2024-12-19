@@ -16,13 +16,10 @@ const handleLogin = async (e) =>
         e.preventDefault();
         try
         {
-            const token = await ApiService.Auth(login, password);
-            console.log('Токен авторизации:', token);
-            if (!token)
-                return;
-            Cookies.set('authToken', token, {expires: 1})
-            console.log(token);
-            setError('Данные верны');
+            const response = await ApiService.Auth(login, password);
+            console.log(response);
+            if (response.status == 200)
+                Cookies.set('authToken', response.data.accessToken, {expires: 1})
             navigate("/Tasks");
         }
         catch (err)
