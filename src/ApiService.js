@@ -44,7 +44,7 @@ const ApiService = {
         PutTask: async (taskId, updateTask) => {
         try {
             console.log('Вход в PutTask');
-            const link = `${API_BASE_URL}/Task`;
+            const link = `${API_BASE_URL}/Task?taskId=${taskId}`;
             const token = Cookies.get('authToken');
     
             if (!token) {
@@ -53,7 +53,6 @@ const ApiService = {
             }
     
             var response = await axios.put(link, updateTask, {
-                params: { taskId: taskId },
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -111,17 +110,19 @@ const ApiService = {
             const token = Cookies.get('authToken');
             
             if (!token) {
-                console.error('PutTaskIsComplete Токен авторизации отсутствует');
+                console.error('PostTask Токен авторизации отсутствует');
                 throw new Error('Not Auth', 401);
             }
-                const response = await axios.post(`${API_BASE_URL}/Task`, createTaskRequest, {
+            console.log(createTaskRequest);
+            var link = `${API_BASE_URL}/Task`;
+                const response = await axios.post(link, createTaskRequest, {
                 headers:{
                     'Authorization' : `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
             return response;
-        } 
+        }
         catch(error)
         {
             console.log(`PostTask error: ${error}`);

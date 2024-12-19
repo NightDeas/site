@@ -43,20 +43,20 @@ const CreateModal = ({ isCreate, open, onCancel, onOk, task }) =>{
             await form.validateFields();
             const values = form.getFieldsValue();
             console.log(values);
-            const taskRequest = {
-                description: values.description,
-                deadline: values.deadline.add(1, 'day').toISOString(),
-                isCompleted: values.isCompleted,
-                employeeId: values.employeeId,
-            };
+        
             console.log(task.id);
             if (task.id != null)
             {
+                var taskRequest = {
+                    description: values.description,
+                    deadline: values.deadline.add(1, 'day').toISOString(),
+                    isCompleted: values.isCompleted,
+                    employeeId: values.employeeId,
+                };
                 var result = await ApiService.PutTask(task.id, taskRequest);
                 console.log(result);
                 if (result.status == 200)
                 {
-
                     console.log('Сущность обновлена');
                     message.success(`Задача обновлена`);
                 } else if (result.status == 403)
@@ -70,6 +70,11 @@ const CreateModal = ({ isCreate, open, onCancel, onOk, task }) =>{
             }
             else
             {
+                var taskRequest = {
+                    description: values.description,
+                    deadLine: values.deadline.add(1, 'day').toISOString(),
+                    employeeId: values.employeeId,
+                };
                 var response = await ApiService.PostTask(taskRequest);
                 console.log('TaskPost response', response);
                 if (response.status == 200)
